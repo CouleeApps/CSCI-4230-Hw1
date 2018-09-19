@@ -11,6 +11,12 @@ To build, run:
     cmake .
     make
 
+To use, run:
+Encrypting:
+    ./Crypto1 -e 1011010101 input_file.txt output_file.txt
+Decrypting:
+    ./Crypto1 -d 1011010101 input_file.txt output_file.txt
+
 The main function is responsible for argument parsing and input/output of data. It sets
 up two file streams and, byte by byte, passes input into either the encryption or
 decryption functions before writing out the encrypted or decrypted value.
