@@ -1,0 +1,48 @@
+Cryptography and Network Security: Homework 1
+Glenn Smith
+
+This is a C++ implementation of the toy DES from the lecture notes. It uses std::bitset
+to represent the various numbers due to their ease of use for setting and accessing
+individual bits in a number. Input and output can be read either from files or stdin/out.
+CMake and a C++11 or higher compiler is required to compile the project. It compiles with
+no warnings with the -Wall setting using Apple Clang 9.1.0 on my system.
+
+To build, run:
+    cmake .
+    make
+
+The main function is responsible for argument parsing and input/output of data. It sets
+up two file streams and, byte by byte, passes input into either the encryption or
+decryption functions before writing out the encrypted or decrypted value.
+
+Encryption and decryption are separated into their own functions for simplicity. Decrypt
+is basically the same as encrypt except with swapped subkey order in the Feistel Cipher
+rounds. Encrypt first generates the 8-bit subkeys from the initial key that will be used
+later for processing. It permutes the input plaintext before launching straight into the
+Feistel Cipher structure. It splits the permuted plaintext into two 4-bit halves and
+runs the high bits (right hand side of the cipher in the diagram) through the F function
+with the initial K1 subkey bits. It takes the result of the F function and xors it with
+the left hand side, and swaps the two sides to complete the first round of the Feistel
+Cipher. Then it repeats the same operation with the now-flipped halves but does not need
+to swap them because this toy DES only has two rounds. At the end it combines the two
+halves and does the inverse initial permutation to make the decryption process have the
+same general structure.
+
+The subkey generation routine first permutes the expanded key by the P10 permutation as
+defined in the lecture slides before splitting the permuted number into high and low bits.
+Each of these halves is run through the left shift operator, which is the equivalent of
+"rotate left" where the top bit wraps around. These two halves are then combined into a
+10-bit bitset before being fed into the P8 permutation that narrows them to 8 bits to form
+the K1 output. Then the previous low and high halves are left shifted again, and those new
+values are combined and permuted with P8 to form the second, K2 values.
+
+The F function is also implemented as specified in the slides, first taking a 4-bit input
+and expanding it to 8 bits via permutation. This new 8-bit value is xor'ed with the subkey
+K1 or K2 input and split into two 4-bit halves. The low bits are run through the S_0
+substitution matrix while the high bits are run through S_1. These S-boxes return the
+value of a matrix cell whose column is selected using bits 2 and 3 of the input and whose
+row is selected using bits 1 and 4. The S-boxes return two 2-bit values that are combined
+before one final permutation, P4, generates the output of the function.
+
+The other functions in the code simply perform the various basic operations on the bitsets,
+either permuting, splitting, combining, left shifting, or swapping bitsets.
