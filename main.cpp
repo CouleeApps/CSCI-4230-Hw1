@@ -8,6 +8,9 @@
 #include <string>
 #include <fstream>
 
+//For testing sbox output distribution for Hw1.2
+#define TEST_SBOX 0
+
 /**
  * Permute and optionally expand/contract a bitset using an array of permuted locations
  */
@@ -218,6 +221,47 @@ std::bitset<8> des_decrypt(const std::bitset<8> &ciphertext,
 	return plaintext;
 }
 
+#if TEST_SBOX
+int main(int argc, const char **argv) {
+	std::array<std::array<int, 4>, 4> S_0 = {{ {{1, 0, 3, 2}}, {{3, 2, 1, 0}}, {{0, 2, 1, 3}}, {{3, 1, 3, 2}} }};
+
+	//And people say C++ is too verbose
+	std::vector<std::vector<std::vector<std::tuple<int, int, int, int>>>>
+		output_results(16, std::vector<std::vector<std::tuple<int, int, int, int>>>(4));
+
+	//Try all possible values of S0
+	for (int x = 0; x < 16; x ++) {
+		for (int x_star = 0; x_star < 16; x_star ++) {
+			std::bitset<4> x_bits{static_cast<unsigned long long int>(x)};
+			std::bitset<4> x_star_bits{static_cast<unsigned long long int>(x_star)};
+			std::bitset<4> x_prime_bits = x_bits ^ x_star_bits;
+
+			std::bitset<2> y_bits = F_sbox(x_bits, S_0);
+			std::bitset<2> y_star_bits = F_sbox(x_star_bits, S_0);
+			std::bitset<2> y_prime_bits = y_bits ^ y_star_bits;
+
+			output_results[x_prime_bits.to_ullong()][y_prime_bits.to_ullong()].push_back({
+				x, x_star, y_bits.to_ullong(), y_star_bits.to_ullong()
+			});
+		}
+	}
+
+	//TSV
+	printf("x_prime");
+	for (int y_prime = 0; y_prime < 4; y_prime ++) {
+		printf("\t%x", y_prime);
+	}
+	printf("\n");
+	for (int x_prime = 0; x_prime < 16; x_prime ++) {
+		printf("%x", x_prime);
+		for (int y_prime = 0; y_prime < 4; y_prime ++) {
+			printf("\t%lu", output_results[x_prime][y_prime].size());
+		}
+		printf("\n");
+	}
+	return 0;
+}
+#else
 int main(int argc, const char **argv) {
 	// Can either run as `cat file.txt | ./Crypto1 -d key` or `./Crypto1 -d key infile.txt outfile.txt`
 	if (argc < 3) {
@@ -269,3 +313,4 @@ int main(int argc, const char **argv) {
 
 	return 0;
 }
+#endif
